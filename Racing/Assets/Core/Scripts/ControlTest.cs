@@ -35,7 +35,7 @@ public class ControlTest : MonoBehaviour
         move.performed += OnMoveStarted;
         move.canceled+= OnMoveCanceled;
 
-        InputAction CameraChange = _inputs.actions["ChangeCamera"];
+        InputAction CameraChange = _inputs.actions["ChangeCam"];
 
         CameraChange.performed += OnChangeCamera;
     }
@@ -43,7 +43,7 @@ public class ControlTest : MonoBehaviour
     private void OnChangeCamera (InputAction.CallbackContext obj)
     {
         var currentCamera = brain.ActiveVirtualCamera as CinemachineVirtualCamera;
-
+       
         if (currentCamera == camera1)
         {
             camera1.Priority= 0;
@@ -83,7 +83,7 @@ public class ControlTest : MonoBehaviour
         float acceleration = _moveDirection.y;
 
         // if we accelerate
-        if (acceleration <= 0)
+        if (acceleration == 0)
         {
             //if were movin and decide to brake
             if (currentAcceleration>0)
