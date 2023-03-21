@@ -37,7 +37,7 @@ public partial class @Controls : IInputActionCollection2, IDisposable
                     ""initialStateCheck"": true
                 },
                 {
-                    ""name"": ""ChangeCam"",
+                    ""name"": ""ChangeCamera"",
                     ""type"": ""Button"",
                     ""id"": ""8d0358f2-28b4-4caa-a99a-4fe07e9adcd0"",
                     ""expectedControlType"": ""Button"",
@@ -120,7 +120,7 @@ public partial class @Controls : IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""ChangeCam"",
+                    ""action"": ""ChangeCamera"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -132,7 +132,7 @@ public partial class @Controls : IInputActionCollection2, IDisposable
         // Player
         m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
         m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
-        m_Player_ChangeCam = m_Player.FindAction("ChangeCam", throwIfNotFound: true);
+        m_Player_ChangeCamera = m_Player.FindAction("ChangeCamera", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -193,13 +193,13 @@ public partial class @Controls : IInputActionCollection2, IDisposable
     private readonly InputActionMap m_Player;
     private IPlayerActions m_PlayerActionsCallbackInterface;
     private readonly InputAction m_Player_Move;
-    private readonly InputAction m_Player_ChangeCam;
+    private readonly InputAction m_Player_ChangeCamera;
     public struct PlayerActions
     {
         private @Controls m_Wrapper;
         public PlayerActions(@Controls wrapper) { m_Wrapper = wrapper; }
         public InputAction @Move => m_Wrapper.m_Player_Move;
-        public InputAction @ChangeCam => m_Wrapper.m_Player_ChangeCam;
+        public InputAction @ChangeCamera => m_Wrapper.m_Player_ChangeCamera;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -212,9 +212,9 @@ public partial class @Controls : IInputActionCollection2, IDisposable
                 @Move.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnMove;
                 @Move.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnMove;
                 @Move.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnMove;
-                @ChangeCam.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnChangeCam;
-                @ChangeCam.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnChangeCam;
-                @ChangeCam.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnChangeCam;
+                @ChangeCamera.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnChangeCamera;
+                @ChangeCamera.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnChangeCamera;
+                @ChangeCamera.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnChangeCamera;
             }
             m_Wrapper.m_PlayerActionsCallbackInterface = instance;
             if (instance != null)
@@ -222,9 +222,9 @@ public partial class @Controls : IInputActionCollection2, IDisposable
                 @Move.started += instance.OnMove;
                 @Move.performed += instance.OnMove;
                 @Move.canceled += instance.OnMove;
-                @ChangeCam.started += instance.OnChangeCam;
-                @ChangeCam.performed += instance.OnChangeCam;
-                @ChangeCam.canceled += instance.OnChangeCam;
+                @ChangeCamera.started += instance.OnChangeCamera;
+                @ChangeCamera.performed += instance.OnChangeCamera;
+                @ChangeCamera.canceled += instance.OnChangeCamera;
             }
         }
     }
@@ -232,6 +232,6 @@ public partial class @Controls : IInputActionCollection2, IDisposable
     public interface IPlayerActions
     {
         void OnMove(InputAction.CallbackContext context);
-        void OnChangeCam(InputAction.CallbackContext context);
+        void OnChangeCamera(InputAction.CallbackContext context);
     }
 }

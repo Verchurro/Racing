@@ -1,25 +1,30 @@
 using Cinemachine;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEditor.Rendering.LookDev;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class ControlTest : MonoBehaviour
 {
-    [SerializeField] AudioSource bikeNoise;
+
     Controls _controls;
 
     private Vector2 _moveDirection;
-  
+
+    [SerializeField] AudioSource bikeNoises, bell;
+
     private PlayerInput _inputs;
+    private Rigidbody _body;
 
-    Transform rot;
+    public float _accelerationRate = 1, _maxSpeed, _currentSpeed, _currentAcceleration, _maxRotationSpeed = 1, _wheelRotationFactor = 5;
+    private Vector3 _wheelRotation;
 
-    public float maxspeed, fixedRotation = 180, currentSpeed, currentAcceleration, maxRotationSpeed = 1f;
-    public CinemachineBrain brain;
-    public CinemachineVirtualCamera camera1, camera2;
+    public CinemachineBrain _brain;
+    public CinemachineVirtualCamera _camera1, _camera2;
 
+    public Transform _wheelFront,  _wheelRear;
+
+    private float _rotationAngle;
+
+    // Start is called before the first frame update
     void Start()
     {
         _inputs = GetComponent<PlayerInput>();
@@ -28,97 +33,146 @@ public class ControlTest : MonoBehaviour
 
         move.started += OnMoveStarted;
         move.performed += OnMovePerformed;
-        move.canceled+= OnMoveCanceled;
+        move.canceled += OnMoveCanceled;
 
-        InputAction CameraChange = _inputs.actions["ChangeCam"];
+        InputAction cameraChange = _inputs.actions["ChangeCamera"];
 
-        CameraChange.performed += OnChangeCamera;
+        cameraChange.performed += OnChangeCamera;
 
-        rot = transform;
+        _body = GetComponentInChildren<Rigidbody>();
+
     }
 
-    private void OnChangeCamera (InputAction.CallbackContext obj)
+
+    #region Inputs
+
+    private void OnChangeCamera(InputAction.CallbackContext obj)
     {
-        var currentCamera = brain.ActiveVirtualCamera as CinemachineVirtualCamera;
-       
-        if (currentCamera == camera1)
+        var currentCamera = _brain.ActiveVirtualCamera as CinemachineVirtualCamera;
+
+        if (currentCamera == _camera1)
         {
-            camera1.Priority= 0;
-            camera2.Priority= 10;
+            _camera1.Priority = 0;
+            _camera2.Priority = 10;
         }
         else
         {
-            camera1.Priority= 10;
-            camera2.Priority= 0;
+            _camera1.Priority = 10;
+            _camera2.Priority = 0;
         }
+    }
+
+    private void OnMoveCanceled(InputAction.CallbackContext obj)
+    {
+        _moveDirection = Vector2.zero;
+        bikeNoises.Stop();
+    }
+
+    public void OnMovePerformed(InputAction.CallbackContext context)
+
+    {
+        _moveDirection = context.ReadValue<Vector2>();
     }
 
     private void OnMoveStarted(InputAction.CallbackContext context)
     {
-        Debug.Log($"Move started : {context.ReadValue<Vector2>()}");
+ bikeNoises.Play();
         _moveDirection = context.ReadValue<Vector2>();
     }
 
-    private void OnMovePerformed(InputAction.CallbackContext context)
-    {
-        Debug.Log($"Move performed : {context.ReadValue<Vector2>()}");
-        _moveDirection = context.ReadValue<Vector2>();
-     
-    }
+    #endregion
 
-    private void OnMoveCanceled(InputAction.CallbackContext context)
+    /// <summary>
+    /// Gestion de la physique
+    /// </summary>
+    void FixedUpdate()
     {
-        _moveDirection = Vector2.zero;
+        _body.AddForce(transform.forward * _currentSpeed);
     }
-        
 
     // Update is called once per frame
     void Update()
     {
-        //put rot y and z at zero when we start
-       
 
-        //recupere the donnees of the movements
+        bellSound();
+        // Récupère les données de mouvement
         float rotationAngle = _moveDirection.x;
         float acceleration = _moveDirection.y;
 
-        // if we accelerate
+        // Si on accélère pas (laché)
         if (acceleration == 0)
         {
-            GetComponent<AudioSource>().Play();
-            //if were movin and decide to brake
-            if (currentAcceleration>0)
-            {
-                currentAcceleration -= Time.deltaTime;
-                GetComponent<AudioSource>().Stop();
-            }
-            else //we backup
-            {
-                currentAcceleration += Time.deltaTime;
-            }
+            _currentAcceleration = Mathf.Lerp(_currentAcceleration, 0, Time.deltaTime * _accelerationRate);
           
         }
+        else if (acceleration < 0)
+        {
+            //Si on est en train d'avancer, on freine
+            if (_currentAcceleration > 0)
+            {
+                _currentAcceleration -= Time.deltaTime;
+            }
+            else // On recule
+            {
+                _currentAcceleration += acceleration * Time.deltaTime;
+            }
+        }
         else
         {
-            //we progressively accelerate
-            currentAcceleration+= acceleration*Time.deltaTime;
+            // On accélère progressivement
+            _currentAcceleration += acceleration * Time.deltaTime;
         }
 
-        currentAcceleration = Mathf.Clamp(currentAcceleration, -1, 1);
+        _currentAcceleration = Mathf.Clamp(_currentAcceleration, -1, 1);
 
-        if (currentAcceleration >= 0)
+        if (_currentAcceleration >= 0)
         {
-            currentSpeed = Mathf.Lerp(0, maxspeed, currentAcceleration);
+            _currentSpeed = Mathf.Lerp(0, _maxSpeed, _currentAcceleration);
         }
         else
         {
-            currentSpeed = Mathf.Lerp(0, -maxspeed, -currentAcceleration);
+            _currentSpeed = Mathf.Lerp(0, -_maxSpeed, -_currentAcceleration);
         }
 
-        //influence acceleration on rotation
-        rotationAngle = rotationAngle* currentAcceleration* maxRotationSpeed* Time.deltaTime;
 
-        transform.Rotate(0, rotationAngle, 0);
-        transform.position = transform.position + transform.forward* (currentSpeed *Time.deltaTime);
+        RotateWheels(rotationAngle);
+
+        // Influence accelerations sur la rotation
+        _rotationAngle = rotationAngle * _currentAcceleration * _maxRotationSpeed;
+
+        // Rotation du player.
+        // /!\ N'utilise pas la physique pour la rotation, mais simplification ok pour nos besoins
+        transform.Rotate(0, _rotationAngle * Time.deltaTime, 0);
     }
+
+    private void RotateWheels(float rotationAngle)
+    {
+        _wheelRotation.x += _currentSpeed * Time.deltaTime * _wheelRotationFactor;
+
+        if (rotationAngle != 0)
+        {
+            _wheelRotation.y = Mathf.Clamp(_wheelRotation.y + rotationAngle * Mathf.Sign(_currentSpeed), -30, 30);
+        }
+        else
+        {
+            _wheelRotation.y = Mathf.Lerp(_wheelRotation.y, 0, Time.deltaTime);
+        }
+
+        _wheelFront.localEulerAngles = _wheelRotation;
+
+        Vector3 rearRotation = _wheelRotation;
+        rearRotation.y = 0;
+
+        _wheelRear.localEulerAngles = rearRotation;
+    }
+
+    private void bellSound()
+    {
+        if (Input.GetKey(KeyCode.E)) 
+        {
+           bell.Play();
+        }
+    }
+
+
 }

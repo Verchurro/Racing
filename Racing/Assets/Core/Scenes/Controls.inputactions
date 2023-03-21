@@ -15,7 +15,7 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "ChangeCam",
+                    "name": "ChangeCamera",
                     "type": "Button",
                     "id": "8d0358f2-28b4-4caa-a99a-4fe07e9adcd0",
                     "expectedControlType": "Button",
@@ -98,7 +98,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "ChangeCam",
+                    "action": "ChangeCamera",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
