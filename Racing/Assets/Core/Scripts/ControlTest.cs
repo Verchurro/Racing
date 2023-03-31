@@ -4,12 +4,9 @@ using UnityEngine.InputSystem;
 
 public class ControlTest : MonoBehaviour
 {
-
-    Controls _controls;
-
     private Vector2 _moveDirection;
 
-    [SerializeField] AudioSource bikeNoises, bell;
+    [SerializeField] AudioSource bikeNoises, bell, crash;
 
     private PlayerInput _inputs;
     private Rigidbody _body;
@@ -93,8 +90,7 @@ public class ControlTest : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
-        bellSound();
+        ExtraSounds();
         // Récupère les données de mouvement
         float rotationAngle = _moveDirection.x;
         float acceleration = _moveDirection.y;
@@ -134,7 +130,6 @@ public class ControlTest : MonoBehaviour
             _currentSpeed = Mathf.Lerp(0, -_maxSpeed, -_currentAcceleration);
         }
 
-
         RotateWheels(rotationAngle);
 
         // Influence accelerations sur la rotation
@@ -166,7 +161,7 @@ public class ControlTest : MonoBehaviour
         _wheelRear.localEulerAngles = rearRotation;
     }
 
-    private void bellSound()
+    private void ExtraSounds()
     {
         if (Input.GetKey(KeyCode.E)) 
         {
@@ -174,5 +169,9 @@ public class ControlTest : MonoBehaviour
         }
     }
 
-
+    private void OnCollisionEnter(Collision collision)
+    {
+        Shake.Instance.shake(5f, .1f);
+        crash.Play();
+    }
 }
